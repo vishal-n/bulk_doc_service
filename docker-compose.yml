@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: bulk_doc_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/bulk_doc_service
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./temp:/app/temp
+    depends_on:
+      - db
+      - redis
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/bulk_doc_service
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./temp:/app/temp
+    depends_on:
+      - db
+      - redis
+    command: celery -A worker.celery worker --loglevel=info
+
+volumes:
+  postgres_data:
