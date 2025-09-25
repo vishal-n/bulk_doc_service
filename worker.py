@@ -1,8 +1,6 @@
 from celery import Celery
 import os
 import zipfile
-import tempfile
-import shutil
 from pathlib import Path
 from database import SessionLocal, Job, File, JobStatus, FileStatus
 from docx_converter import convert_docx_to_pdf
@@ -46,7 +44,10 @@ def process_job(job_id: str):
                 
                 # Convert the file
                 input_path = f"/app/uploads/{job_id}/{file_record.filename}"
-                output_path = f"/app/outputs/{job_id}/{file_record.filename.replace('.docx', '.pdf')}"
+                output_path = (
+                    f"/app/outputs/{job_id}/"
+                    f"{file_record.filename.replace('.docx', '.pdf')}"
+                )
                 
                 # Ensure output directory exists
                 Path(output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +71,9 @@ def process_job(job_id: str):
                 file_record.status = FileStatus.FAILED
                 file_record.error_message = str(e)
                 failed_files += 1
-                logger.error(f"Error processing {file_record.filename}: {str(e)}")
+                logger.error(
+                    f"Error processing {file_record.filename}: {str(e)}"
+                )
                 db.commit()
         
         # Create zip archive if there are completed files
@@ -81,12 +84,22 @@ def process_job(job_id: str):
             # Update job with download URL
             job.download_url = f"/api/v1/jobs/{job_id}/download"
             job.status = JobStatus.COMPLETED
+            logger.info(
+                f"Job {job_id} completed successfully with "
+                f"{completed_files} files converted"
+            )
         else:
             job.status = JobStatus.FAILED
-            job.error_message = "All files failed to convert"
+            job.error_message = f"All {len(files)} files failed to convert"
+            logger.error(
+                f"Job {job_id} failed: All files failed to convert"
+            )
         
         db.commit()
-        logger.info(f"Job {job_id} completed. Success: {completed_files}, Failed: {failed_files}")
+        logger.info(
+            f"Job {job_id} completed. Success: {completed_files}, "
+            f"Failed: {failed_files}"
+        )
         
     except Exception as e:
         logger.error(f"Error processing job {job_id}: {str(e)}")

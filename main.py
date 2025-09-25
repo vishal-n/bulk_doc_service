@@ -72,16 +72,24 @@ async def create_job(
         try:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 for file_info in zip_ref.infolist():
-                    if file_info.filename.endswith('.docx') and not file_info.is_dir():
-                        # Extract file
-                        zip_ref.extract(file_info, job_upload_dir)
-                        extracted_path = f"{job_upload_dir}/{file_info.filename}"
-                        
-                        # Validate DOCX file
-                        if validate_docx_file(extracted_path):
-                            docx_files.append(file_info.filename)
-                        else:
-                            logger.warning(f"Invalid DOCX file: {file_info.filename}")
+                    # Skip directories, system files, and non-DOCX files
+                    if (file_info.is_dir() or
+                            file_info.filename.startswith('__MACOSX/') or
+                            file_info.filename.startswith('.') or
+                            not file_info.filename.lower().endswith('.docx')):
+                        continue
+                    
+                    # Extract file
+                    zip_ref.extract(file_info, job_upload_dir)
+                    extracted_path = f"{job_upload_dir}/{file_info.filename}"
+                    
+                    # Validate DOCX file
+                    if validate_docx_file(extracted_path):
+                        docx_files.append(file_info.filename)
+                    else:
+                        logger.warning(
+                            f"Invalid DOCX file: {file_info.filename}"
+                        )
         except zipfile.BadZipFile:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -174,6 +182,24 @@ async def download_job_results(job_id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found"
+        )
+    
+    if job.status == JobStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job is still pending"
+        )
+    
+    if job.status == JobStatus.IN_PROGRESS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job is still in progress"
+        )
+    
+    if job.status == JobStatus.FAILED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Job failed: {job.error_message or 'Unknown error'}"
         )
     
     if job.status != JobStatus.COMPLETED:
