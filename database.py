@@ -11,17 +11,20 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+
 class JobStatus(str, enum.Enum):
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
 
+
 class FileStatus(str, enum.Enum):
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -34,6 +37,7 @@ class Job(Base):
     download_url = Column(String, nullable=True)
     error_message = Column(Text, nullable=True)
 
+
 class File(Base):
     __tablename__ = "files"
     
@@ -45,12 +49,14 @@ class File(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
 
 def create_tables():
     Base.metadata.create_all(bind=engine)

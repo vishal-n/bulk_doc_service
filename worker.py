@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 celery = Celery("worker", broker=REDIS_URL, backend=REDIS_URL)
 
+
 @celery.task
 def process_job(job_id: str):
     """Process a conversion job"""
@@ -108,6 +109,7 @@ def process_job(job_id: str):
         db.commit()
     finally:
         db.close()
+
 
 def create_zip_archive(job_id: str, zip_path: str):
     """Create a zip archive of all converted PDF files"""

@@ -24,6 +24,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
 # Create database tables on startup
 @app.on_event("startup")
 async def startup_event():
@@ -32,6 +33,7 @@ async def startup_event():
     os.makedirs("/app/uploads", exist_ok=True)
     os.makedirs("/app/outputs", exist_ok=True)
     os.makedirs("/app/temp", exist_ok=True)
+
 
 @app.post(
     "/api/v1/jobs", 
@@ -140,6 +142,7 @@ async def create_job(
             detail="Internal server error"
         )
 
+
 @app.get("/api/v1/jobs/{job_id}", response_model=JobResponse)
 async def get_job_status(job_id: str, db: Session = Depends(get_db)):
     """
@@ -171,6 +174,7 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
         files=file_infos,
         file_count=job.file_count
     )
+
 
 @app.get("/api/v1/jobs/{job_id}/download")
 async def download_job_results(job_id: str, db: Session = Depends(get_db)):
@@ -221,12 +225,14 @@ async def download_job_results(job_id: str, db: Session = Depends(get_db)):
         media_type="application/zip"
     )
 
+
 @app.get("/health")
 async def health_check():
     """
     Health check endpoint
     """
     return {"status": "healthy"}
+
 
 if __name__ == "__main__":
     import uvicorn

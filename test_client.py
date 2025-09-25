@@ -10,6 +10,7 @@ from pathlib import Path
 
 API_BASE_URL = "http://localhost:8000"
 
+
 def create_test_zip():
     """Create a test ZIP file with sample DOCX files"""
     # This is a placeholder - in a real test, you would create actual DOCX files
@@ -27,6 +28,7 @@ def create_test_zip():
         zipf.write(test_file, "test_document.txt")
     
     return zip_path
+
 
 def test_api():
     """Test the API endpoints"""
@@ -126,6 +128,7 @@ def test_api():
         pass
     
     print("\nTest completed!")
+
 
 if __name__ == "__main__":
     test_api()

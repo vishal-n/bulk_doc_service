@@ -5,6 +5,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 def convert_docx_to_pdf(input_path: str, output_path: str) -> bool:
     """
     Convert DOCX file to PDF using LibreOffice
@@ -65,6 +66,7 @@ def convert_docx_to_pdf(input_path: str, output_path: str) -> bool:
     except Exception as e:
         logger.error(f"Error converting {input_path}: {str(e)}")
         return False
+
 
 def validate_docx_file(file_path: str) -> bool:
     """
